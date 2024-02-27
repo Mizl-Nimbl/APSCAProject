@@ -1,7 +1,9 @@
+import java.io.IOException;
+
 public class Main
 {
     public static boolean Running = true;
-    public static void main(String arg[])
+    public static void main(String arg[]) throws IOException 
     {
         Chat c = new Chat();
         System.out.println("Hello World!");
@@ -14,6 +16,10 @@ public class Main
                 Commands.help();
             }
             else if (input.equals("exit"))
+            {
+                Commands.exit();
+            }
+            else if (input.equals("quit"))
             {
                 Commands.exit();
             }

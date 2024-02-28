@@ -6,11 +6,14 @@ public class Main
     public static void main(String arg[]) throws IOException 
     {
         Chat c = new Chat();
-        System.out.println("Hello World!");
+
+        System.out.println("wassup gang"); 
         System.out.println("start typing below to begin!");
+
         while (Running == true)
         {
-            String input = c.getInput();
+            String input = c.newInput();
+    
             if (input.equals("help"))
             {
                 Commands.help();
@@ -36,11 +39,15 @@ public class Main
                 String url = input.substring(6);
                 Commands.train(url);
             }
-            else
+            else if (c.chat(input))
             {
                 Commands.chat(input);
             }
+            else
+            {
+                System.out.println("e: Command not found. Type 'help' for a list of commands.");
+            }
         }
-        Chat.s.close();
+        c.s.close();
     }
 }

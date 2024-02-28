@@ -13,12 +13,18 @@ public class Commands {
     {
         System.out.println("Commands:");
         System.out.println("help - displays this message");
-        System.out.println("exit - exits the program");
+        System.out.println("exit/quit - exits the program");
+        System.out.println("train (link) - scrapes website DONT DO THIS");
+        System.out.println("filter - filters scraped data and creates hash map");
+        System.out.println("wipe - clears all scraped data");
+        System.out.println("chat (input) - chat with the bot");
     }
+
     public static void exit()
     {
         Main.Running = false;
     }
+    
     public static void train(String urlinput) throws IOException 
     {
         //download data from the web

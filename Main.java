@@ -23,6 +23,14 @@ public class Main
             {
                 Commands.exit();
             }
+            else if (input.equals("wipe"))
+            {
+                Commands.wipesave();
+            }
+            else if (input.equals("filter"))
+            {
+                Commands.filter();
+            }
             else if (input.startsWith("train"))
             {
                 String url = input.substring(6);

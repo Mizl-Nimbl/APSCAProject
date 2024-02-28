@@ -5,8 +5,8 @@ import java.io.InputStreamReader;
 import java.io.FileWriter;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.Buffer;
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Commands {
     public static void help()
@@ -40,9 +40,11 @@ public class Commands {
         StringBuilder htmlfiltered = new StringBuilder();
         boolean inside = false;
 
+        System.out.println("FINDING BODY TEXT");
         //remove everything before the body tag
         data = data.substring(data.indexOf("<body"));
 
+        System.out.println("FILTERING");
         //filter out html tags
         for (int i = 0; i < data.length(); i++) 
         {
@@ -65,103 +67,104 @@ public class Commands {
         }
 
         String[] words = htmlfiltered.toString().split("\\s+");
-        ArrayList<String> noun = new ArrayList<String>();
-        ArrayList<String> verb = new ArrayList<String>();
-        ArrayList<String> adverb = new ArrayList<String>();
-        ArrayList<String> adjective = new ArrayList<String>();
-        ArrayList<String> preposition = new ArrayList<String>();
-        ArrayList<String> pronoun = new ArrayList<String>();
-        ArrayList<String> interjection = new ArrayList<String>();
-        ArrayList<String> conjunction = new ArrayList<String>();
-        ArrayList<String> uncategorized = new ArrayList<String>();
 
         //BufferedReader reader = new BufferedReader(new FileReader("words.txt"));
 
-        FileWriter nounWriter = new FileWriter("wordfiles/nouns.txt", true);
-        FileWriter verbWriter = new FileWriter("wordfiles/verbs.txt", true);
-        FileWriter adverbWriter = new FileWriter("wordfiles/adverbs.txt", true);
-        FileWriter adjectiveWriter = new FileWriter("wordfiles/adjectives.txt", true);
-        FileWriter prepositionWriter = new FileWriter("wordfiles/prepositions.txt", true);
-        FileWriter pronounWriter = new FileWriter("wordfiles/pronouns.txt", true);
-        FileWriter interjectionWriter = new FileWriter("wordfiles/interjections.txt", true);
-        FileWriter conjunctionWriter = new FileWriter("wordfiles/conjunction.txt", true);
-        FileWriter uncatWriter = new FileWriter("wordfiles/uncategorized.txt", true);
+        FileWriter writer = new FileWriter("wordfiles/words.txt", true);
 
-        System.out.println("CATEGORIZE THE WORDS");
-        Chat c = new Chat();
-        for (int i = 0; i < words.length; i++) {
-            String word = words[i];
-            System.out.println("what type of word is: " + word);
-            System.out.println("1. Noun");
-            System.out.println("2. Verb");
-            System.out.println("3. Adverb");
-            System.out.println("4. Adjective");
-            System.out.println("5. Preposition");
-            System.out.println("6. Pronoun");
-            System.out.println("7. Interjection");
-            System.out.println("8. Conjunction");
-            String input = c.getInput();
+        System.out.println("CATEGORIZING");
+        for (int i = 0; i < words.length; i++) 
+        {
+            String currentWord = words[i];
+            int sortedIndex = i - 1;
+	        while(sortedIndex > -1 && words[sortedIndex].length() > currentWord.length()) {
+                words[sortedIndex + 1] = words[sortedIndex];
+                sortedIndex--;
+            }
+	        words[sortedIndex + 1] = currentWord;
+            writer.write(currentWord + "\n");
+        }
+        writer.close();
+        System.out.println("DONE");
 
-            if (input == "1") 
-            {
-                noun.add(word);
-                nounWriter.write(word + "\n");
-            }
-            else if (input == "2") 
-            {
-                verb.add(word);
-                verbWriter.write(word + "\n");
-            }
-            else if (input == "3") 
-            {
-                adverb.add(word);
-                adverbWriter.write(word + "\n");
-            }
-            else if (input == "4") 
-            {
-                adjective.add(word);
-                adjectiveWriter.write(word + "\n");
-            }
-            else if (input == "5") 
-            {
-                preposition.add(word);
-                prepositionWriter.write(word + "\n");
-            }
-            else if (input == "6") 
-            {
-                pronoun.add(word);
-                pronounWriter.write(word + "\n");
-            }
-            else if (input == "7") 
-            {
-                interjection.add(word);
-                interjectionWriter.write(word + "\n");
-            }
-            else if (input == "8") 
-            {
-                conjunction.add(word);
-                conjunctionWriter.write(word + "\n");
-            }
-            else
-            {
-                uncategorized.add(word);
-                uncatWriter.write(word + "\n");
-            }
         
-            
+    }
+    public static void wipesave()
+    {
+        try 
+        {
+            FileWriter writer = new FileWriter("wordfiles/words.txt");
+            writer.write("");
+            writer.close();
+            System.out.println("WIPED WORDS");
+        } 
+        catch (IOException e) 
+        {
+            System.out.println("FAILURE TO WIPE WORDS");
+            e.printStackTrace();
+        }
+        try 
+        {
+            FileWriter writer = new FileWriter("wordfiles/hashed.txt");
+            writer.write("");
+            writer.close();
+            System.out.println("WIPED HASHES");
+        } 
+        catch (IOException e) 
+        {
+            System.out.println("FAILURE TO WIPE HASHES");
+            e.printStackTrace();
+        }
+    }
+    public static void filter() throws IOException 
+    {
+        Map<String, Integer> wordCount = new HashMap<>();
+        BufferedReader hashedReader = new BufferedReader(new FileReader("wordfiles/hashed.txt"));
+        String hashedLine;
+        while ((hashedLine = hashedReader.readLine()) != null) {
+            String[] parts = hashedLine.split(" ");
+            try {
+                wordCount.put(parts[0], Integer.parseInt(parts[1]));
+            } catch (NumberFormatException e) {
+                // Skip invalid lines
+                continue;
+            }
+        }
+        hashedReader.close();
+
+        BufferedReader reader = new BufferedReader(new FileReader("wordfiles/words.txt"));
+        String line = reader.readLine();
+        StringBuilder filteredWords = new StringBuilder();
+        System.out.println("FILTERING");
+        while (line != null) 
+        {
+            line = line.replaceAll("[^a-zA-Z]", "");
+            filteredWords.append(line).append("\n");
+            wordCount.put(line, wordCount.getOrDefault(line, 0) + 1);
+            line = reader.readLine();
+        }
+        reader.close();
+
+        System.out.println("REPLACING");
+        String[] words = filteredWords.toString().split("\\s+");
+        for (int i = 0; i < words.length; i++) 
+        {
+            String word = words[i];
+            if (word.matches("[a-z]+[A-Z][a-zA-Z]*")) 
+            {
+                String[] parts = word.split("(?=[A-Z])");
+                if (parts.length > 1) 
+                {
+                    words[i] = parts[0] + "\n" + parts[1].toLowerCase();
+                }
+            }
         }
 
-        nounWriter.close();
-        verbWriter.close();
-        adverbWriter.close();
-        adjectiveWriter.close();
-        prepositionWriter.close();
-        pronounWriter.close();
-        interjectionWriter.close();
-        conjunctionWriter.close();
-        uncatWriter.close();
-
-        //reader.close();
+        System.out.println("WRITING");
+        FileWriter writer = new FileWriter("wordfiles/hashed.txt");
+        writer.write(String.join("\n", words + " " + wordCount));
+        writer.close();
+        System.out.println("DONE");
     }
     public static void chat(String input)
     {

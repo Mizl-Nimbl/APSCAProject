@@ -164,6 +164,20 @@ public class Commands {
         FileWriter writer = new FileWriter("wordfiles/hashed.txt");
         writer.write(String.join("\n", words + " " + wordCount));
         writer.close();
+
+        try 
+        {
+            FileWriter writer2 = new FileWriter("wordfiles/words.txt");
+            writer2.write("");
+            writer2.close();
+            System.out.println("WIPED WORDS");
+        } 
+        catch (IOException e) 
+        {
+            System.out.println("FAILURE TO WIPE WORDS");
+            e.printStackTrace();
+        }
+
         System.out.println("DONE");
     }
     public static void chat(String input)

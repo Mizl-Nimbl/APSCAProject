@@ -41,8 +41,15 @@ public class Commands {
         boolean inside = false;
 
         System.out.println("FINDING BODY TEXT");
-        //remove everything before the body tag
-        data = data.substring(data.indexOf("<body"));
+
+        int bodyIndex = data.indexOf("<body");
+        if (bodyIndex == -1) {
+            System.out.println("E: No <body> tag found in the data. please review words.txt before filtering...");
+            bodyIndex = 0;
+        }
+
+        // Remove everything before the body tag
+        data = data.substring(bodyIndex);
 
         System.out.println("FILTERING");
         //filter out html tags

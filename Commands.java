@@ -5,8 +5,11 @@ import java.io.InputStreamReader;
 import java.io.FileWriter;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 public class Commands {
     public static void help()
@@ -125,19 +128,23 @@ public class Commands {
     }
     public static void filter() throws IOException 
     {
+        
         Map<String, Integer> wordCount = new HashMap<>();
         BufferedReader hashedReader = new BufferedReader(new FileReader("wordfiles/hashed.txt"));
-        String hashedLine;
-        while ((hashedLine = hashedReader.readLine()) != null) {
-            String[] parts = hashedLine.split(" ");
-            try {
-                wordCount.put(parts[0], Integer.parseInt(parts[1]));
-            } catch (NumberFormatException e) {
-                // Skip invalid lines
-                continue;
+        String hashedLine = hashedReader.readLine();
+        if (hashedLine != null)
+        {
+            if (hashedLine.startsWith("{") && hashedLine.endsWith("}")) {
+                hashedLine = hashedLine.substring(1, hashedLine.length() - 1);
+                String[] parts = hashedLine.split(", ");
+                for (String part : parts) {
+                    String[] keyValue = part.split(" ");
+                    wordCount.put(keyValue[0], Integer.parseInt(keyValue[1]));
+                }
             }
         }
         hashedReader.close();
+
 
         BufferedReader reader = new BufferedReader(new FileReader("wordfiles/words.txt"));
         String line = reader.readLine();
@@ -168,8 +175,28 @@ public class Commands {
         }
 
         System.out.println("WRITING");
+        BufferedReader hashedReader2 = new BufferedReader(new FileReader("wordfiles/hashed.txt"));
+        List<String> lines = new ArrayList<>();
+        String current = hashedReader2.readLine();
+        while (current != null) 
+        {
+            lines.add(current);
+            current = hashedReader2.readLine();
+        }
+        hashedReader2.close();
+
         FileWriter writer = new FileWriter("wordfiles/hashed.txt");
-        writer.write(String.join("\n", words + " " + wordCount));
+        for (String currentLine : lines) 
+        {
+            String word = currentLine.split(" ")[0];
+            int count = Integer.parseInt(currentLine.split(" ")[1]);
+            if (wordCount.containsKey(word)) 
+            {
+                int oldCount = wordCount.get(word);
+                count += oldCount;
+            }
+            writer.write(word + " " + count + "\n");
+        }
         writer.close();
 
         try 

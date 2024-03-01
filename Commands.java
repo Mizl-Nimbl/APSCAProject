@@ -169,17 +169,15 @@ public class Commands {
                 writer.write(entry.getKey() + " " + entry.getValue() + "\n");
             }
         }
-        writer.flush();
         writer.close();
 
         //combine word counts for duplicate words
         //sort by frequency
         //write back to file
-        FileWriter sorter = new FileWriter("wordfiles/hashed.txt");
         BufferedReader sortreader = new BufferedReader(new FileReader("wordfiles/hashed.txt"));
         Map<String, Integer> sorted = new HashMap<>();
         Map<String, Integer> unsorted = new HashMap<>();
-        
+
         String sortline = sortreader.readLine();
         while (sortline != null) 
         {
@@ -209,19 +207,21 @@ public class Commands {
         {
             Entry<String, Integer> key = sortedList.get(i);
             int j = i - 1;
-            while (j >= 0 && sortedList.get(j).getValue() > key.getValue()) 
+            while (j > -1 && sortedList.get(j).getValue() > key.getValue()) 
             {
                 sortedList.set(j + 1, sortedList.get(j));
                 j--;
             }
             sortedList.set(j + 1, key);
         }
-        
+
+        FileWriter sorter = new FileWriter("wordfiles/hashed.txt");
+
         for (Entry<String, Integer> entry : sortedList) 
         {
             sorter.write(entry.getKey() + " " + entry.getValue() + "\n");
         }
-        sorter.flush();
+
         sorter.close();
         sortreader.close();
 

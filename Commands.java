@@ -9,9 +9,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Map.Entry;
 
-public class Commands {
+public class Commands 
+{
     public static void help()
     {
         System.out.println("Commands:");
@@ -245,7 +247,8 @@ public class Commands {
 
         System.out.println("DONE");
     }
-    public static void chat(String input) throws IOException {
+    public static void chat(String input) throws IOException 
+    {
         //parse input
 
         String[] words = input.split(" ");
@@ -269,62 +272,38 @@ public class Commands {
 
         //generate response
 
-        //find probabilities of each match
-        Map<String, Double> matchProbs = new HashMap<>();
-        int matchTotal = 0;
-        for (Entry<String, Integer> entry : matches.entrySet()) 
+        //markov chain response
+        String response = "";
+        Map<String, List<String>> markovChain = new HashMap<>();
+
+        // Build the Markov chain
+        List<String> keyArray = new ArrayList<>(data.keySet());
+        Random rand = new Random();
+
+        for (int i = 0; i < words.length - 1; i++) 
         {
-            matchTotal += entry.getValue();
-        }
-        for (Entry<String, Integer> entry : matches.entrySet()) 
-        {
-            double probability = (double) entry.getValue() / matchTotal;
-            matchProbs.put(entry.getKey(), probability);
-        }
-        //find probabilities of each data word
-        Map<String, Double> dataProbs = new HashMap<>();
-        int dataTotal = 0;
-        for (Entry<String, Integer> entry : data.entrySet()) 
-        {
-            dataTotal += entry.getValue();
-        }
-        for (Entry<String, Integer> entry : data.entrySet()) 
-        {
-            double probability = (double) entry.getValue() / dataTotal;
-            dataProbs.put(entry.getKey(), probability);
+            String currentWord = data.containsKey(words[i]) ? words[i] : words[i];
+            String nextWord = data.containsKey(words[i + 1]) ? words[i + 1] : words[i + 1];
+            
+            if (!markovChain.containsKey(currentWord)) 
+            {
+                markovChain.put(currentWord, new ArrayList<>());
+            }
+            markovChain.get(currentWord).add(nextWord);
         }
 
-        //randomly select a word based on the probabilities of both total data and matches and put them into a list
-        List<String> responseWords = new ArrayList<>();
-        for (int i = 0; i < Math.random() * 103 + 1; i++) 
+        // Generate the response using the Markov chain
+        String currentWord = data.containsKey(words[(int) (Math.random() * words.length)]) ? words[(int) (Math.random() * words.length)] : words[(int) (Math.random() * words.length)];
+        for (int i = 0; i < Math.random() * 100 + 1; i++) 
         {
-            double rand = Math.random();
-            double total = 0;
-            for (Entry<String, Double> entry : dataProbs.entrySet()) 
-            {
-                total += entry.getValue();
-                if (rand <= total) 
-                {
-                    responseWords.add(entry.getKey());
-                    break;
-                }
+            response += currentWord + " ";
+            
+            if (markovChain.containsKey(currentWord)) {
+                List<String> nextWords = markovChain.get(currentWord);
+                currentWord = nextWords.get((int) (Math.random() * nextWords.size()));
+            } else {
+                currentWord = keyArray.get((int) (Math.random() * keyArray.size()));
             }
-            for (Entry<String, Double> entry : matchProbs.entrySet()) 
-            {
-                total += entry.getValue();
-                if (rand <= total) 
-                {
-                    responseWords.add(entry.getKey());
-                    break;
-                }
-            }
-        }
-        //take words and append them to a string in a random order
-        StringBuilder response = new StringBuilder();
-        while (!responseWords.isEmpty()) 
-        {
-            int rand = (int) (Math.random() * responseWords.size());
-            response.append(responseWords.remove(rand)).append(" ");
         }
 
         //print response

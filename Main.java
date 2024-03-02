@@ -7,31 +7,31 @@ public class Main
     {
         Chat c = new Chat();
         System.out.println("Hello World!");
-        System.out.println("start typing below to begin!");
+        System.out.println("start typing below to begin!\nType '!help' for a list of commands.");
         while (Running == true)
         {
             String input = c.getInput();
-            if (input.equals("help"))
+            if (input.equals("!help"))
             {
                 Commands.help();
             }
-            else if (input.equals("exit"))
+            else if (input.equals("!exit"))
             {
                 Commands.exit();
             }
-            else if (input.equals("quit"))
+            else if (input.equals("!quit"))
             {
                 Commands.exit();
             }
-            else if (input.equals("wipe"))
+            else if (input.equals("!wipe"))
             {
                 Commands.wipesave();
             }
-            else if (input.equals("filter"))
+            else if (input.equals("!filter"))
             {
                 Commands.filter();
             }
-            else if (input.startsWith("train"))
+            else if (input.startsWith("!train"))
             {
                 String url = input.substring(6);
                 Commands.train(url);

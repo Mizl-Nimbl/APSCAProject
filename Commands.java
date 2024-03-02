@@ -15,8 +15,12 @@ public class Commands {
     public static void help()
     {
         System.out.println("Commands:");
-        System.out.println("help - displays this message");
-        System.out.println("exit - exits the program");
+        System.out.println("!help - displays this message");
+        System.out.println("!exit/quit - exits the program");
+        System.out.println("!wipe - wipes the data file and hashed file clean");
+        System.out.println("!filter - filters the data file to remove duplicates and sort by frequency");
+        System.out.println("!train <url> - trains the bot with the data from the url");
+        System.out.println("anything else - chat with the bot");
     }
     public static void exit()
     {
@@ -241,11 +245,56 @@ public class Commands {
 
         System.out.println("DONE");
     }
-    public static void chat(String input)
+    public static void chat(String input) throws IOException
     {
         //parse input
+
+        String[] words = input.split(" ");
         //compare to data file
+        BufferedReader reader = new BufferedReader(new FileReader("wordfiles/hashed.txt"));
+        Map<String, Integer> data = new HashMap<>();
+        Map<String, Integer> matches = new HashMap<>();
+        for (String line = reader.readLine(); line != null; line = reader.readLine()) 
+        {
+            String[] parts = line.split(" ");
+            data.put(parts[0], Integer.parseInt(parts[1]));
+        }
+        for (String word : words) 
+        {
+            if (data.containsKey(word)) 
+            {
+                matches.put(word, data.get(word));
+            }
+        }
+        reader.close();
         //generate response
+
+        //find probabiltiies of each match
+        Map<String, Double> probabilities = new HashMap<>();
+        int total = 0;
+        for (Entry<String, Integer> entry : matches.entrySet()) 
+        {
+            total += entry.getValue();
+        }
+        for (Entry<String, Integer> entry : matches.entrySet()) 
+        {
+            double probability = (double)entry.getValue() / total;
+            probabilities.put(entry.getKey(), probability);
+        }
+        //randomly select a word based on the probabilities
+        double random = Math.random();
+        double current = 0;
+        String response = "";
+        for (Entry<String, Double> entry : probabilities.entrySet()) 
+        {
+            current += entry.getValue();
+            if (current >= random) 
+            {
+                response = entry.getKey();
+            }
+        }
+        System.out.println(response);
+
         //print response
     }
 }

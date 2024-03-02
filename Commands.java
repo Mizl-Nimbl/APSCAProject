@@ -245,8 +245,7 @@ public class Commands {
 
         System.out.println("DONE");
     }
-    public static void chat(String input) throws IOException
-    {
+    public static void chat(String input) throws IOException {
         //parse input
 
         String[] words = input.split(" ");
@@ -267,34 +266,68 @@ public class Commands {
             }
         }
         reader.close();
+
         //generate response
 
-        //find probabiltiies of each match
-        Map<String, Double> probabilities = new HashMap<>();
-        int total = 0;
+        //find probabilities of each match
+        Map<String, Double> matchProbs = new HashMap<>();
+        int matchTotal = 0;
         for (Entry<String, Integer> entry : matches.entrySet()) 
         {
-            total += entry.getValue();
+            matchTotal += entry.getValue();
         }
         for (Entry<String, Integer> entry : matches.entrySet()) 
         {
-            double probability = (double)entry.getValue() / total;
-            probabilities.put(entry.getKey(), probability);
+            double probability = (double) entry.getValue() / matchTotal;
+            matchProbs.put(entry.getKey(), probability);
         }
-        //randomly select a word based on the probabilities
-        double random = Math.random();
-        double current = 0;
-        String response = "";
-        for (Entry<String, Double> entry : probabilities.entrySet()) 
+        //find probabilities of each data word
+        Map<String, Double> dataProbs = new HashMap<>();
+        int dataTotal = 0;
+        for (Entry<String, Integer> entry : data.entrySet()) 
         {
-            current += entry.getValue();
-            if (current >= random) 
+            dataTotal += entry.getValue();
+        }
+        for (Entry<String, Integer> entry : data.entrySet()) 
+        {
+            double probability = (double) entry.getValue() / dataTotal;
+            dataProbs.put(entry.getKey(), probability);
+        }
+
+        //randomly select a word based on the probabilities of both total data and matches and put them into a list
+        List<String> responseWords = new ArrayList<>();
+        for (int i = 0; i < Math.random() * 103 + 1; i++) 
+        {
+            double rand = Math.random();
+            double total = 0;
+            for (Entry<String, Double> entry : dataProbs.entrySet()) 
             {
-                response = entry.getKey();
+                total += entry.getValue();
+                if (rand <= total) 
+                {
+                    responseWords.add(entry.getKey());
+                    break;
+                }
+            }
+            for (Entry<String, Double> entry : matchProbs.entrySet()) 
+            {
+                total += entry.getValue();
+                if (rand <= total) 
+                {
+                    responseWords.add(entry.getKey());
+                    break;
+                }
             }
         }
-        System.out.println(response);
+        //take words and append them to a string in a random order
+        StringBuilder response = new StringBuilder();
+        while (!responseWords.isEmpty()) 
+        {
+            int rand = (int) (Math.random() * responseWords.size());
+            response.append(responseWords.remove(rand)).append(" ");
+        }
 
         //print response
+        System.out.println(response);
     }
 }

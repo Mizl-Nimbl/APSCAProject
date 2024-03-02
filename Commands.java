@@ -278,7 +278,6 @@ public class Commands
 
         // Build the Markov chain
         List<String> keyArray = new ArrayList<>(data.keySet());
-        Random rand = new Random();
 
         for (int i = 0; i < words.length - 1; i++) 
         {
@@ -298,10 +297,13 @@ public class Commands
         {
             response += currentWord + " ";
             
-            if (markovChain.containsKey(currentWord)) {
+            if (markovChain.containsKey(currentWord)) 
+            {
                 List<String> nextWords = markovChain.get(currentWord);
                 currentWord = nextWords.get((int) (Math.random() * nextWords.size()));
-            } else {
+            } 
+            else 
+            {
                 currentWord = keyArray.get((int) (Math.random() * keyArray.size()));
             }
         }

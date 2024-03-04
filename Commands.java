@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Map.Entry;
 
 public class Commands 
@@ -84,26 +83,16 @@ public class Commands
 
         String[] words = htmlfiltered.toString().split("\\s+");
 
-        //BufferedReader reader = new BufferedReader(new FileReader("words.txt"));
-
         FileWriter writer = new FileWriter("wordfiles/words.txt", true);
 
         System.out.println("CATEGORIZING");
-        for (int i = 0; i < words.length; i++) 
+        for (int i = 0; i < words.length - 1; i++) 
         {
-            String currentWord = words[i];
-            int sortedIndex = i - 1;
-	        while(sortedIndex > -1 && words[sortedIndex].length() > currentWord.length()) {
-                words[sortedIndex + 1] = words[sortedIndex];
-                sortedIndex--;
-            }
-	        words[sortedIndex + 1] = currentWord;
+            String currentWord = words[i] + " " + words[i + 1];
             writer.write(currentWord + "\n");
         }
         writer.close();
         System.out.println("DONE");
-
-        
     }
     public static void wipesave()
     {
@@ -140,7 +129,9 @@ public class Commands
         String line = reader.readLine();
         while (line != null) 
         {
-            line = line.replaceAll("[^a-zA-Z]", "");
+            line = line.replaceAll("[^a-zA-Z ]", "");
+            line = line.replaceAll("[^a-zA-Z\\s]", "");
+            line = line.toLowerCase();
             wordCount.put(line, wordCount.getOrDefault(line, 0) + 1);
             line = reader.readLine();
         }
@@ -159,20 +150,20 @@ public class Commands
         FileWriter writer = new FileWriter("wordfiles/hashed.txt");
         for (String currentLine : lines) 
         {
-            String word = currentLine.split(" ")[0];
-            int count = Integer.parseInt(currentLine.split(" ")[1]);
+            String word = currentLine.split(", ")[0];
+            int count = Integer.parseInt(currentLine.split(", ")[1]);
             if (wordCount.containsKey(word))
             {
                 int oldCount = wordCount.get(word);
                 count += oldCount;
             }
-            writer.write(word + " " + count + "\n");
+            writer.write(word + ", " + count + "\n");
         }
         for (Entry<String, Integer> entry : wordCount.entrySet()) 
         {
             if (!lines.contains(entry.getKey())) 
             {
-                writer.write(entry.getKey() + " " + entry.getValue() + "\n");
+                writer.write(entry.getKey() + ", " + entry.getValue() + "\n");
             }
         }
         writer.close();
@@ -187,8 +178,8 @@ public class Commands
         String sortline = sortreader.readLine();
         while (sortline != null) 
         {
-            String word = sortline.split(" ")[0];
-            int count = Integer.parseInt(sortline.split(" ")[1]);
+            String word = sortline.split(", ")[0];
+            int count = Integer.parseInt(sortline.split(", ")[1]);
             unsorted.put(word, count);
             sortline = sortreader.readLine();
         }
@@ -225,7 +216,7 @@ public class Commands
 
         for (Entry<String, Integer> entry : sortedList) 
         {
-            sorter.write(entry.getKey() + " " + entry.getValue() + "\n");
+            sorter.write(entry.getKey() + ", " + entry.getValue() + "\n");
         }
 
         sorter.close();
@@ -250,65 +241,79 @@ public class Commands
     public static void chat(String input) throws IOException 
     {
         //parse input
-
         String[] words = input.split(" ");
-        //compare to data file
+        //read data from file
         BufferedReader reader = new BufferedReader(new FileReader("wordfiles/hashed.txt"));
-        Map<String, Integer> data = new HashMap<>();
-        Map<String, Integer> matches = new HashMap<>();
-        for (String line = reader.readLine(); line != null; line = reader.readLine()) 
+        Map<String, Integer> wordCount = new HashMap<>();
+        String line = reader.readLine();
+
+        while (line != null) 
         {
-            String[] parts = line.split(" ");
-            data.put(parts[0], Integer.parseInt(parts[1]));
+            String word = line.split(", ")[0];
+            int count = Integer.parseInt(line.split(", ")[1]);
+            wordCount.put(word, count);
+            line = reader.readLine();
         }
-        for (String word : words) 
+
+        reader.close();
+        //calculate probabilities of each word appearing after one another based on bigrams
+        Map<String, Double> probabilities = new HashMap<>();
+
+        for (int i = 0; i < wordCount.size() - 1; i++) 
         {
-            if (data.containsKey(word)) 
+            String currentWord = words[i];
+            if (wordCount.containsKey(currentWord))
             {
-                matches.put(word, data.get(word));
+                double probability = (double) wordCount.get(currentWord) / wordCount.get(words[i]);
+                probabilities.put(currentWord, probability);
             }
         }
-        reader.close();
 
-        //generate response
+        if (probabilities.isEmpty())
+        {
+            System.out.println("E: no probabilities found. Please train the bot with more data.");
+            return;
+        }
 
-        //markov chain response
+        //find the word with the highest probability to say first based on the input
+        
         String response = "";
-        Map<String, List<String>> markovChain = new HashMap<>();
-
-        // Build the Markov chain
-        List<String> keyArray = new ArrayList<>(data.keySet());
-
+        double highestProbability = 0;
+        
         for (int i = 0; i < words.length - 1; i++) 
         {
-            String currentWord = data.containsKey(words[i]) ? words[i] : words[i];
-            String nextWord = data.containsKey(words[i + 1]) ? words[i + 1] : words[i + 1];
-            
-            if (!markovChain.containsKey(currentWord)) 
+            String currentWord = words[i] + " " + words[i + 1];
+            if (probabilities.containsKey(currentWord))
             {
-                markovChain.put(currentWord, new ArrayList<>());
+                if (probabilities.get(currentWord) > highestProbability)
+                {
+                    highestProbability = probabilities.get(currentWord);
+                    response = currentWord;
+                }
             }
-            markovChain.get(currentWord).add(nextWord);
         }
 
-        // Generate the response using the Markov chain
-        String currentWord = data.containsKey(words[(int) (Math.random() * words.length)]) ? words[(int) (Math.random() * words.length)] : words[(int) (Math.random() * words.length)];
-        for (int i = 0; i < Math.random() * 100 + 1; i++) 
+        //if no word is found, print error
+
+        if (response.equals(""))
         {
-            response += currentWord + " ";
-            
-            if (markovChain.containsKey(currentWord)) 
+            System.out.println("E: No response found. Please train the bot with more data.");
+            return;
+        }
+
+        //append words to the response based on bigram combinations
+        
+        for (int i = 0; i < 100; i++) 
+        {
+            for (Entry<String, Double> entry : probabilities.entrySet()) 
             {
-                List<String> nextWords = markovChain.get(currentWord);
-                currentWord = nextWords.get((int) (Math.random() * nextWords.size()));
-            } 
-            else 
-            {
-                currentWord = keyArray.get((int) (Math.random() * keyArray.size()));
+                if (entry.getKey().startsWith(response))
+                {
+                    response += " " + entry.getKey().split(" ")[1];
+                }
             }
         }
 
-        //print response
         System.out.println(response);
     }
 }

@@ -6,8 +6,19 @@ public class Main
     public static void main(String arg[]) throws IOException 
     {
         Chat c = new Chat();
-        
-        System.out.println("start typing below to begin!\nType '!help' for a list of commands.");
+        //print GANG DOOHICKEY
+        c.ascii();
+        //go to sleep at 9 pm zzz
+        try 
+        {
+            Thread.sleep(1000);
+        } 
+        catch (InterruptedException e) 
+        {
+            e.printStackTrace();
+        }
+
+        System.out.println("Welcome to AJ and Noah's project!\nstart typing below to begin!\nType '!help' for a list of commands.\nType anything else to 'complete' text");
         while (Running == true)
         {
             String input = c.getInput();

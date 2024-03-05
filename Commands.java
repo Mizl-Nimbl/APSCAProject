@@ -13,10 +13,26 @@ import java.util.Map.Entry;
 
 public class Commands 
 {
+    //globals for operations, MAKE GETTERS AND SETTERS LATER
+    
+    /*
+    LENGTHFACTOR should be above 0. higher values will increase the length of the response. 
+    */
+
+    public static final double LENGTHFACTOR = 3; 
+
+    /*
+    HEATFACTOR should be above 0. higher values will decrease the randomness of the response
+    extremely high values will shorten the sentence significantly at the cost of being lectured to about steel.
+    */
+
+    public static final double HEATFACTOR = 2;
+
+    /* DO NOT TWEAK ANYTHING BELOW THIS POINT. */
+
     public static void sample()
     {
-        System.out.println("https://www.");
-        //put ur website here (if you want we can pick a different website)
+        System.out.println("https://www.mizl.dev/blog");
     }
     public static void help()
     {
@@ -37,16 +53,33 @@ public class Commands
     {
         //download data from the web
         StringBuilder content = new StringBuilder();
-        URL url = new URL(urlinput);
-        URLConnection urlConnection = url.openConnection();
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()))) 
+        try 
         {
-            String line;
-            while ((line = reader.readLine()) != null) 
+            URL url = new URL(urlinput);
+            URLConnection urlConnection = null;
+            try 
             {
-                content.append(line).append("\n");
+                urlConnection = url.openConnection();
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()))) 
+                {
+                    String line;
+                    while ((line = reader.readLine()) != null) 
+                    {
+                        content.append(line).append("\n");
+                    }
+                }
+            } 
+            catch (IOException e) 
+            {
+                System.out.println("E: error occurred while connecting to the URL: " + e.getMessage() + " ...maybe the URL is invalid?");
+                return;
             }
+        } 
+        catch (Exception e) 
+        {
+            System.out.println("E: error occurred while connecting to the URL: " + e.getMessage() + " ...maybe the URL is malformed?");
+            return;
         }
 
         String data = content.toString();
@@ -262,65 +295,55 @@ public class Commands
         }
 
         reader.close();
-        //calculate probabilities of each word appearing after one another based on bigrams
-        Map<String, Double> probabilities = new HashMap<>();
 
-        for (int i = 0; i < wordCount.size() - 1; i++) 
-        {
-            String currentWord = words[i];
-            if (wordCount.containsKey(currentWord))
-            {
-                double probability = (double) wordCount.get(currentWord) / wordCount.get(words[i]);
-                probabilities.put(currentWord, probability);
-            }
+        //normalize word counts
+        int counter = 0;
+        int totalCount = 0;
+        Map<String, Integer> normalized = new HashMap<>();
+
+        for (int value : wordCount.values()) {
+            totalCount += value;
         }
 
-        if (probabilities.isEmpty())
+        for (Entry<String, Integer> entry : wordCount.entrySet()) 
         {
-            System.out.println("E: no probabilities found. Please train the bot with more data.");
-            return;
+            System.out.print("Generating probability tables: " + counter + "/" + wordCount.size() + "   " + "\r");
+            double normalizedProbability = ((double) entry.getValue() / (double) totalCount) * (Math.random() * HEATFACTOR + 0.80);
+            entry.setValue((int) ((normalizedProbability * totalCount) * 10));
+            normalized.put(entry.getKey(), entry.getValue());
+            totalCount -= entry.getValue();
+            counter++;
         }
+        System.out.println("Generating probability tables: done!                      ");
 
-        //find the word with the highest probability to say first based on the input
-        
         String response = "";
-        double highestProbability = 0;
-        
-        for (int i = 0; i < words.length - 1; i++) 
+        response += String.join(" ", words) + " ";
+
+        double current = 0;
+
+        for (Entry<String, Integer> entry : normalized.entrySet())
         {
-            String currentWord = words[i] + " " + words[i + 1];
-            if (probabilities.containsKey(currentWord))
+            //System.out.println("Generating response: " + entry.getKey() + "   " + "\r");
+            double random = Math.random() * 1.5 + 1.7;
+            current = entry.getValue() * 0.1;
+
+            if (random * HEATFACTOR < current)
             {
-                if (probabilities.get(currentWord) > highestProbability)
-                {
-                    highestProbability = probabilities.get(currentWord);
-                    response = currentWord;
-                }
+                response += entry.getKey() + " ";
+            }
+            else 
+            {
+                response += "";
+            }
+
+            if(response.length() > (Math.random() * 2000) * LENGTHFACTOR)
+            {
+                break;
             }
         }
 
-        //if no word is found, print error
-
-        if (response.equals(""))
-        {
-            System.out.println("E: No response found. Please train the bot with more data.");
-            return;
-        }
-
-        //append words to the response based on bigram combinations
-        
-        for (int i = 0; i < 100; i++) 
-        {
-            for (Entry<String, Double> entry : probabilities.entrySet()) 
-            {
-                if (entry.getKey().startsWith(response))
-                {
-                    response += " " + entry.getKey().split(" ")[1];
-                }
-            }
-        }
-
-        System.out.println(response);
+        System.out.println("Generating response: done!");
+        System.out.println(response.toString());
     }
 }
 

@@ -6,7 +6,7 @@ public class Main
     public static void main(String arg[]) throws IOException 
     {
         Chat c = new Chat();
-        System.out.println("Hello World!");
+        
         System.out.println("start typing below to begin!\nType '!help' for a list of commands.");
         while (Running == true)
         {

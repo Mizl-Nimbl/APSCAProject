@@ -36,6 +36,11 @@ public class Main
                 String url = input.substring(6);
                 Commands.train(url);
             }
+            else if(input.equals("!sample"))
+            {
+                Commands.sample();
+            }
+            //maybe make a save command to save data, so it can get smarter over time
             else
             {
                 Commands.chat(input);

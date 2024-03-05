@@ -13,6 +13,11 @@ import java.util.Map.Entry;
 
 public class Commands 
 {
+    public static void sample()
+    {
+        System.out.println("https://www.");
+        //put ur website here (if you want we can pick a different website)
+    }
     public static void help()
     {
         System.out.println("Commands:");
@@ -21,6 +26,7 @@ public class Commands
         System.out.println("!wipe - wipes the data file and hashed file clean");
         System.out.println("!filter - filters the data file to remove duplicates and sort by frequency");
         System.out.println("!train <url> - trains the bot with the data from the url");
+        System.out.println("!sample - gives a sample website to train the bot with");
         System.out.println("anything else - chat with the bot");
     }
     public static void exit()

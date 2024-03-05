@@ -1,4 +1,4 @@
-error handling for unexpected inputs 
+error handling for unexpected inputs  (instead of anything else we should make a chat command that puts you in a while loop while you chat)
 state the purpose in the console
 
 i had my parents test this over the weekend, the only feedback i got was the error handling thing, and that we should have a website

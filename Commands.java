@@ -26,9 +26,17 @@ public class Commands
     extremely high values will shorten the sentence significantly at the cost of being lectured to about steel.
     */
 
-    public static final double HEATFACTOR = 2;
+    public static final double HEATFACTOR = 0.2;
 
     /* DO NOT TWEAK ANYTHING BELOW THIS POINT. */
+
+    /* globals */
+
+    public static boolean Filtered = false;
+    public static boolean ProbsGenerated = false;
+    public static Map<String, Integer> normalized = new HashMap<>();
+
+    /* end globals */
 
     public static void sample()
     {
@@ -43,6 +51,7 @@ public class Commands
         System.out.println("!filter - filters the data file to remove duplicates and sort by frequency");
         System.out.println("!train <url> - trains the bot with the data from the url");
         System.out.println("!sample - gives a sample website to train the bot with");
+        System.out.println("!debug - toggles debug mode");
         System.out.println("anything else - chat with the bot");
     }
     public static void exit()
@@ -69,7 +78,7 @@ public class Commands
                         content.append(line).append("\n");
                     }
                 }
-            } 
+            }
             catch (IOException e) 
             {
                 System.out.println("E: error occurred while connecting to the URL: " + e.getMessage() + " ...maybe the URL is invalid?");
@@ -125,13 +134,27 @@ public class Commands
         FileWriter writer = new FileWriter("wordfiles/words.txt", true);
 
         System.out.println("CATEGORIZING");
+        
         for (int i = 0; i < words.length - 1; i++) 
         {
             String currentWord = words[i] + " " + words[i + 1];
             writer.write(currentWord + "\n");
         }
+
         writer.close();
         System.out.println("DONE");
+
+        Filtered = false;
+
+        if (Main.Debug == true)
+        {
+            System.out.println("WEBTEXT IS BLANK?: " + htmlfiltered.toString().isBlank());
+            System.out.println("WORDS IS BLANK?: " + words.toString().isBlank());
+            System.out.println("URL IS BLANK?: " + urlinput.isBlank());
+            System.out.println("DATA IS BLANK?: " + data.isBlank());
+            System.out.println("CONTENT IS BLANK?: " + content.toString().isBlank());
+            System.out.println("FIltered?: " + Filtered);
+        }
     }
     public static void wipesave()
     {
@@ -159,123 +182,151 @@ public class Commands
             System.out.println("FAILURE TO WIPE HASHES");
             e.printStackTrace();
         }
+
+        Filtered = false;
+
+        if (Main.Debug == true)
+        {
+            System.out.println("Filtered?: " + Filtered);
+        }
     }
     public static void filter() throws IOException 
     {
-        //parse current data
-        BufferedReader reader = new BufferedReader(new FileReader("wordfiles/words.txt"));
-        Map<String, Integer> wordCount = new HashMap<>();
-        String line = reader.readLine();
-        while (line != null) 
+        if (Filtered) 
         {
-            line = line.replaceAll("[^a-zA-Z ]", "");
-            line = line.replaceAll("[^a-zA-Z\\s]", "");
-            line = line.toLowerCase();
-            wordCount.put(line, wordCount.getOrDefault(line, 0) + 1);
-            line = reader.readLine();
+            System.out.println("ALREADY FILTERED");
+            return;
         }
-        reader.close();
-
-        BufferedReader hashedReader = new BufferedReader(new FileReader("wordfiles/hashed.txt"));
-        List<String> lines = new ArrayList<>();
-        String hashedLine= hashedReader.readLine();
-        while (hashedLine != null) 
+        else
         {
-            lines.add(hashedLine);
-            hashedLine = hashedReader.readLine();
-        }
-        hashedReader.close();
-    
-        FileWriter writer = new FileWriter("wordfiles/hashed.txt");
-        for (String currentLine : lines) 
-        {
-            String word = currentLine.split(", ")[0];
-            int count = Integer.parseInt(currentLine.split(", ")[1]);
-            if (wordCount.containsKey(word))
+            //parse current data
+            BufferedReader reader = new BufferedReader(new FileReader("wordfiles/words.txt"));
+            Map<String, Integer> wordCount = new HashMap<>();
+            String line = reader.readLine();
+            while (line != null) 
             {
-                int oldCount = wordCount.get(word);
-                count += oldCount;
+                line = line.replaceAll("[^a-zA-Z ]", "");
+                line = line.replaceAll("[^a-zA-Z\\s]", "");
+                line = line.toLowerCase();
+                wordCount.put(line, wordCount.getOrDefault(line, 0) + 1);
+                line = reader.readLine();
             }
-            writer.write(word + ", " + count + "\n");
-        }
-        for (Entry<String, Integer> entry : wordCount.entrySet()) 
-        {
-            if (!lines.contains(entry.getKey())) 
+            reader.close();
+
+            BufferedReader hashedReader = new BufferedReader(new FileReader("wordfiles/hashed.txt"));
+            List<String> lines = new ArrayList<>();
+            String hashedLine= hashedReader.readLine();
+            while (hashedLine != null) 
             {
-                writer.write(entry.getKey() + ", " + entry.getValue() + "\n");
+                lines.add(hashedLine);
+                hashedLine = hashedReader.readLine();
             }
-        }
-        writer.close();
-
-        //combine word counts for duplicate words
-        //sort by frequency
-        //write back to file
-        BufferedReader sortreader = new BufferedReader(new FileReader("wordfiles/hashed.txt"));
-        Map<String, Integer> sorted = new HashMap<>();
-        Map<String, Integer> unsorted = new HashMap<>();
-
-        String sortline = sortreader.readLine();
-        while (sortline != null) 
-        {
-            String word = sortline.split(", ")[0];
-            int count = Integer.parseInt(sortline.split(", ")[1]);
-            unsorted.put(word, count);
-            sortline = sortreader.readLine();
-        }
-
-        for (Entry<String, Integer> entry : unsorted.entrySet()) 
-        {
-            if (sorted.containsKey(entry.getKey()))
+            hashedReader.close();
+        
+            FileWriter writer = new FileWriter("wordfiles/hashed.txt");
+            for (String currentLine : lines) 
             {
-                int oldCount = sorted.get(entry.getKey());
-                int newCount = entry.getValue();
-                int totalCount = oldCount + newCount;
-                sorted.put(entry.getKey(), totalCount);
+                String word = currentLine.split(", ")[0];
+                int count = Integer.parseInt(currentLine.split(", ")[1]);
+                if (wordCount.containsKey(word))
+                {
+                    int oldCount = wordCount.get(word);
+                    count += oldCount;
+                }
+                writer.write(word + ", " + count + "\n");
             }
-            else
+            for (Entry<String, Integer> entry : wordCount.entrySet()) 
             {
-                sorted.put(entry.getKey(), entry.getValue());
+                if (!lines.contains(entry.getKey())) 
+                {
+                    writer.write(entry.getKey() + ", " + entry.getValue() + "\n");
+                }
             }
-        }
+            writer.close();
 
-        List<Entry<String, Integer>> sortedList = new ArrayList<>(sorted.entrySet());
-        for (int i = 1; i < sortedList.size(); i++) 
-        {
-            Entry<String, Integer> key = sortedList.get(i);
-            int j = i - 1;
-            while (j > -1 && sortedList.get(j).getValue() > key.getValue()) 
+            //combine word counts for duplicate words
+            //sort by frequency
+            //write back to file
+            BufferedReader sortreader = new BufferedReader(new FileReader("wordfiles/hashed.txt"));
+            Map<String, Integer> sorted = new HashMap<>();
+            Map<String, Integer> unsorted = new HashMap<>();
+
+            String sortline = sortreader.readLine();
+            while (sortline != null) 
             {
-                sortedList.set(j + 1, sortedList.get(j));
-                j--;
+                String word = sortline.split(", ")[0];
+                int count = Integer.parseInt(sortline.split(", ")[1]);
+                unsorted.put(word, count);
+                sortline = sortreader.readLine();
             }
-            sortedList.set(j + 1, key);
+
+            for (Entry<String, Integer> entry : unsorted.entrySet()) 
+            {
+                if (sorted.containsKey(entry.getKey()))
+                {
+                    int oldCount = sorted.get(entry.getKey());
+                    int newCount = entry.getValue();
+                    int totalCount = oldCount + newCount;
+                    sorted.put(entry.getKey(), totalCount);
+                }
+                else
+                {
+                    sorted.put(entry.getKey(), entry.getValue());
+                }
+            }
+
+            List<Entry<String, Integer>> sortedList = new ArrayList<>(sorted.entrySet());
+            for (int i = 1; i < sortedList.size(); i++) 
+            {
+                Entry<String, Integer> key = sortedList.get(i);
+                int j = i - 1;
+                while (j > -1 && sortedList.get(j).getValue() > key.getValue()) 
+                {
+                    sortedList.set(j + 1, sortedList.get(j));
+                    j--;
+                }
+                sortedList.set(j + 1, key);
+            }
+
+            FileWriter sorter = new FileWriter("wordfiles/hashed.txt");
+
+            for (Entry<String, Integer> entry : sortedList) 
+            {
+                sorter.write(entry.getKey() + ", " + entry.getValue() + "\n");
+            }
+
+            sorter.close();
+            sortreader.close();
+
+            try 
+            {
+                FileWriter writer2 = new FileWriter("wordfiles/words.txt");
+                writer2.write("");
+                writer2.flush();
+                writer2.close();
+                System.out.println("WIPED WORDS");
+            } 
+            catch (IOException e) 
+            {
+                System.out.println("FAILURE TO WIPE WORDS");
+                e.printStackTrace();
+            }
+
+            System.out.println("DONE");
+
+            Filtered = true;
+            ProbsGenerated = false;
+
+            if (Main.Debug == true)
+            {
+                System.out.println("SORTEDLIST IS BLANK?: " + sortedList.toString().isBlank());
+                System.out.println("SORTLINE IS NULL?: " + (sortline == null));
+                System.out.println("HASHEDLINE IS NULL?: " + (hashedLine == null));
+                System.out.println("PROBABILITY TABLE GENERATED?: " + ProbsGenerated);
+                System.out.println("LINE IS NULL?: " + (line == null));
+                System.out.println("Filtered?: " + Filtered);
+            }
         }
-
-        FileWriter sorter = new FileWriter("wordfiles/hashed.txt");
-
-        for (Entry<String, Integer> entry : sortedList) 
-        {
-            sorter.write(entry.getKey() + ", " + entry.getValue() + "\n");
-        }
-
-        sorter.close();
-        sortreader.close();
-
-        try 
-        {
-            FileWriter writer2 = new FileWriter("wordfiles/words.txt");
-            writer2.write("");
-            writer2.flush();
-            writer2.close();
-            System.out.println("WIPED WORDS");
-        } 
-        catch (IOException e) 
-        {
-            System.out.println("FAILURE TO WIPE WORDS");
-            e.printStackTrace();
-        }
-
-        System.out.println("DONE");
     }
     public static void chat(String input) throws IOException 
     {
@@ -299,31 +350,37 @@ public class Commands
         //normalize word counts
         int counter = 0;
         int totalCount = 0;
-        Map<String, Integer> normalized = new HashMap<>();
+        
 
-        for (int value : wordCount.values()) {
+        for (int value : wordCount.values()) 
+        {
             totalCount += value;
         }
 
-        for (Entry<String, Integer> entry : wordCount.entrySet()) 
+        if (ProbsGenerated != true)
         {
-            System.out.print("Generating probability tables: " + counter + "/" + wordCount.size() + "   " + "\r");
-            double normalizedProbability = ((double) entry.getValue() / (double) totalCount) * (Math.random() * HEATFACTOR + 0.80);
-            entry.setValue((int) ((normalizedProbability * totalCount) * 10));
-            normalized.put(entry.getKey(), entry.getValue());
-            totalCount -= entry.getValue();
-            counter++;
+            for (Entry<String, Integer> entry : wordCount.entrySet()) 
+            {
+                System.out.print("Generating probability tables: " + counter + "/" + wordCount.size() + "   " + "\r");
+                double normalizedProbability = ((double) entry.getValue() / (double) totalCount) * (Math.random() * HEATFACTOR + 0.8);
+                entry.setValue((int) ((normalizedProbability * totalCount) * 10));
+                normalized.put(entry.getKey(), entry.getValue());
+                totalCount -= entry.getValue();
+                counter++;
+            }
         }
+
         System.out.println("Generating probability tables: done!                      ");
 
         String response = "";
         response += String.join(" ", words) + " ";
 
         double current = 0;
+        Double lengthvar = (Math.random() * 50) * LENGTHFACTOR;
 
         for (Entry<String, Integer> entry : normalized.entrySet())
         {
-            //System.out.println("Generating response: " + entry.getKey() + "   " + "\r");
+            System.out.print("Generating response: " + response.length() + "/" + lengthvar + "   " + "\r");
             double random = Math.random() * 1.5 + 1.7;
             current = entry.getValue() * 0.1;
 
@@ -336,13 +393,19 @@ public class Commands
                 response += "";
             }
 
-            if(response.length() > (Math.random() * 2000) * LENGTHFACTOR)
+            if(response.length() > lengthvar)
             {
                 break;
             }
         }
 
-        System.out.println("Generating response: done!");
+        System.out.println("Generating response: done!                                   ");
+        if (Main.Debug == true)
+        {
+            System.out.println("RESPONSE WORD COUNT?: " + response.split(" ").length);
+            System.out.println("PROBABILITY TABLE GENERATED?: " + ProbsGenerated);
+            System.out.println("RESPONSE IS NULL?: " + (response == null));
+        }
         System.out.println(response.toString());
     }
 }

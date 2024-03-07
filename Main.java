@@ -3,9 +3,11 @@ import java.io.IOException;
 public class Main
 {
     public static boolean Running = true;
+    public static boolean Debug = false;
     public static void main(String arg[]) throws IOException 
     {
         Chat c = new Chat();
+        Debug d = new Debug();
         //print GANG DOOHICKEY
         c.ascii();
         //go to sleep at 9 pm zzz
@@ -21,40 +23,89 @@ public class Main
         System.out.println("Welcome to AJ and Noah's project!\nstart typing below to begin!\nType '!help' for a list of commands.\nType anything else to 'complete' text");
         while (Running == true)
         {
-            String input = c.getInput();
-            if (input.equals("!help"))
+            if (Debug == false)
             {
-                Commands.help();
+                String input = c.getInput();
+                if (input.equals("!help"))
+                {
+                    Commands.help();
+                }
+                else if (input.equals("!exit"))
+                {
+                    Commands.exit();
+                }
+                else if (input.equals("!quit"))
+                {
+                    Commands.exit();
+                }
+                else if (input.equals("!wipe"))
+                {
+                    Commands.wipesave();
+                }
+                else if (input.equals("!filter"))
+                {
+                    Commands.filter();
+                }
+                else if (input.startsWith("!train"))
+                {
+                    String url = input.substring(6);
+                    Commands.train(url);
+                }
+                else if(input.equals("!sample"))
+                {
+                    Commands.sample();
+                }
+                else if(input.equals("!debug"))
+                {
+                    Debug = true;
+                    System.out.println("Debug mode activated");
+                }
+                else
+                {
+                    Commands.chat(input);
+                }
             }
-            else if (input.equals("!exit"))
+            if (Debug == true)
             {
-                Commands.exit();
-            }
-            else if (input.equals("!quit"))
-            {
-                Commands.exit();
-            }
-            else if (input.equals("!wipe"))
-            {
-                Commands.wipesave();
-            }
-            else if (input.equals("!filter"))
-            {
-                Commands.filter();
-            }
-            else if (input.startsWith("!train"))
-            {
-                String url = input.substring(6);
-                Commands.train(url);
-            }
-            else if(input.equals("!sample"))
-            {
-                Commands.sample();
-            }
-            //maybe make a save command to save data, so it can get smarter over time
-            else
-            {
-                Commands.chat(input);
+                String input = d.getInput();
+                if (input.equals("!help"))
+                {
+                    Commands.help();
+                }
+                else if (input.equals("!exit"))
+                {
+                    Commands.exit();
+                }
+                else if (input.equals("!quit"))
+                {
+                    Commands.exit();
+                }
+                else if (input.equals("!wipe"))
+                {
+                    Commands.wipesave();
+                }
+                else if (input.equals("!filter"))
+                {
+                    Commands.filter();
+                }
+                else if (input.startsWith("!train"))
+                {
+                    String url = input.substring(6);
+                    Commands.train(url);
+                }
+                else if(input.equals("!sample"))
+                {
+                    Commands.sample();
+                }
+                else if(input.equals("!debug"))
+                {
+                    Debug = false;
+                    System.out.println("Debug mode deactivated");
+                }
+                else
+                {
+                    Commands.chat(input);
+                }
             }
         }
         Chat.s.close();
